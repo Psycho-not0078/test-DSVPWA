@@ -29,7 +29,7 @@ jobs:
           - name: output
             id: sast
             run: | 
-              echo "outputJson=$(cat SAST-results.json)" >> $GITHUB_OUTPUT 
+              echo "outputJson=$(cat SAST-results.json | jq -c .)" >> $GITHUB_OUTPUT 
 
     sbom_generator:
         name: Running Syft [SBOM generator] on project
@@ -47,7 +47,7 @@ jobs:
             - name: output
               id: sbom
               run: | 
-                echo "outputJson=$(cat sbom.json)" >> $GITHUB_OUTPUT 
+                echo "outputJson=$(cat sbom.json | jq -c .)" >> $GITHUB_OUTPUT 
 
     secret_detection:
         name: Running Truffle-Hog on project
@@ -57,16 +57,21 @@ jobs:
         steps:
             - name: Checkout code
               uses: actions/checkout@v4
-            - name: Secret Scanning
+            # - name: Secret Scanning
+            #   id: truffleHog
+            #   uses: trufflesecurity/trufflehog@main
+            #   with:
+            #     path: ./ 
+            #     extra_args: --json --log-level=-1 >> secrets-result.json
+            - name: install and run truffleHog
               id: truffleHog
-              uses: trufflesecurity/trufflehog@main
-              with:
-                path: ./ 
-                extra_args: --json --log-level=-1 >> secrets-result.json
+              run: |
+                curl -sSfL https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh | sh -s -- -b /usr/local/bin
+                trufflehog filesystem ./ --json --log-level=-1 >> secrets-result.json  
             - name: output
               id: sbom
               run: | 
-                echo "outputJson=$(cat secrets-result.json)" >> $GITHUB_OUTPUT 
+                echo "outputJson=$(cat secrets-result.json | jq -c .)" >> $GITHUB_OUTPUT
 
     sca:
         name: Running Grype [SCA] on project
@@ -88,7 +93,7 @@ jobs:
         - name: output
           id: sca
           run: | 
-            echo "outputJson=$(cat sca-results.json)" >> $GITHUB_OUTPUT 
+            echo "outputJson=$(cat sca-results.json | jq -c .)" >> $GITHUB_OUTPUT
 
     PublishOutput:
       name: Publishing output of all Steps after basic Review
@@ -151,7 +156,7 @@ jobs:
                     COMMIT_MESSAGE="Report Update: ${{ github.event.repository.name }}/${BRANCH_NAME} - Files: $CHANGED_FILES"
                     
                     git commit -m "$COMMIT_MESSAGE"
-                    git push
+                    git push origin main
                     echo "Successfully pushed report changes to the reports repository."
                     echo "Commit Message: $COMMIT_MESSAGE"
                   fi
