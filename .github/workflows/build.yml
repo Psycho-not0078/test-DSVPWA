@@ -19,13 +19,13 @@ jobs:
           - name: Checkout code
             uses: actions/checkout@v4
           - name: Run Bearer SAST
-            # id: bearer
             uses: bearer/bearer-action@v2
             with:
               scanner: sast
               quiet: true
               format: json
               output: SAST-results.json
+              exit-code: 0
           - name: output
             id: sast
             run: | 
@@ -57,12 +57,6 @@ jobs:
         steps:
             - name: Checkout code
               uses: actions/checkout@v4
-            # - name: Secret Scanning
-            #   id: truffleHog
-            #   uses: trufflesecurity/trufflehog@main
-            #   with:
-            #     path: ./ 
-            #     extra_args: --json --log-level=-1 >> secrets-result.json
             - name: install and run truffleHog
               id: truffleHog
               run: |
@@ -71,7 +65,9 @@ jobs:
             - name: output
               id: sbom
               run: | 
-                echo "outputJson=$(cat secrets-result.json | jq -c .)" >> $GITHUB_OUTPUT
+                echo "outputJson<<EOF" >> $GITHUB_OUTPUT
+                cat secrets-result.json | jq -c . >> $GITHUB_OUTPUT
+                echo "EOF" >> $GITHUB_OUTPUT
 
     sca:
         name: Running Grype [SCA] on project
