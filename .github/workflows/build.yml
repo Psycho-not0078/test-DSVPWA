@@ -89,7 +89,7 @@ jobs:
                 only-fixed: true
                 severity-cutoff: high
                 output-file: sca-results.json
-                output_format: json
+                output-format: json
         - name: output
           id: sca
           run: | 
