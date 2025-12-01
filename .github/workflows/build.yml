@@ -7,7 +7,9 @@ on:
           - 'main'
 
 env:
-  BREAK_ON_FAILURE_FLAG: true # Set to true or false
+  BREAK_ON_FAILURE_FLAG: true 
+  # Set to true for normal flow
+  # Set to false for emergency deployment
 
 jobs:
     sast:
@@ -25,11 +27,20 @@ jobs:
               quiet: true
               format: json
               output: SAST-results.json
-              exit-code: 0
           - name: output
             id: sast
+            if: always()
             run: | 
-              echo "outputJson=$(cat SAST-results.json | jq -c .)" >> $GITHUB_OUTPUT 
+              # Use a conditional command to check if the file exists before attempting to read it
+              if [ -f "SAST-results.json" ]; then
+                echo "outputJson<<EOF" >> $GITHUB_OUTPUT
+                cat SAST-results.json | jq -c . >> $GITHUB_OUTPUT
+                echo "EOF" >> $GITHUB_OUTPUT
+              else
+                # If the file does not exist (e.g., if Bearer failed to run entirely), 
+                # output an empty JSON object to prevent downstream errors.
+                echo "outputJson={}" >> $GITHUB_OUTPUT
+              fi
 
     sbom_generator:
         name: Running Syft [SBOM generator] on project
@@ -45,9 +56,19 @@ jobs:
                 format: spdx-json
                 output-file: sbom.json
             - name: output
-              id: sbom
+              id: sast
+              if: always()
               run: | 
-                echo "outputJson=$(cat sbom.json | jq -c .)" >> $GITHUB_OUTPUT 
+                # Use a conditional command to check if the file exists before attempting to read it
+                if [ -f "SAST-results.json" ]; then
+                  echo "outputJson<<EOF" >> $GITHUB_OUTPUT
+                  cat SAST-results.json | jq -c . >> $GITHUB_OUTPUT
+                  echo "EOF" >> $GITHUB_OUTPUT
+                else
+                  # If the file does not exist (e.g., if Bearer failed to run entirely), 
+                  # output an empty JSON object to prevent downstream errors.
+                  echo "outputJson={}" >> $GITHUB_OUTPUT
+                fi
 
     secret_detection:
         name: Running Truffle-Hog on project
@@ -63,12 +84,19 @@ jobs:
                 curl -sSfL https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh | sh -s -- -b /usr/local/bin
                 trufflehog filesystem ./ --json --log-level=-1 -x ./.git>> secrets-result.json  
             - name: output
-              id: sbom
-              run: | 
-                echo "outputJson<<EOF" >> $GITHUB_OUTPUT
-                cat secrets-result.json | jq -c . >> $GITHUB_OUTPUT
-                echo "EOF" >> $GITHUB_OUTPUT
-
+              id: secrets
+              if: always()
+              run: |
+                # Check if the output file was successfully created
+                if [ -f "secrets-result.json" ]; then
+                  echo "outputJson<<EOF" >> $GITHUB_OUTPUT
+                  # Read the file and compact it with jq -c .
+                  cat secrets-result.json | jq -c . >> $GITHUB_OUTPUT
+                  echo "EOF" >> $GITHUB_OUTPUT
+                else
+                  # If the file does not exist, output an empty JSON object to prevent downstream errors
+                  echo "outputJson={}" >> $GITHUB_OUTPUT
+                fi
     sca:
         name: Running Grype [SCA] on project
         runs-on: ubuntu-latest
@@ -88,8 +116,19 @@ jobs:
                 output-format: json
         - name: output
           id: sca
+          if: always()
           run: | 
-            echo "outputJson=$(cat sca-results.json | jq -c .)" >> $GITHUB_OUTPUT
+            # Check if the output file was successfully created
+            if [ -f "sca-results.json" ]; then
+              # Use the robust multiline method to safely pass the JSON content
+              echo "outputJson<<EOF" >> $GITHUB_OUTPUT
+              cat sca-results.json | jq -c . >> $GITHUB_OUTPUT
+              echo "EOF" >> $GITHUB_OUTPUT
+            else
+              # If the file does not exist, output an empty JSON object to prevent 
+              # errors in the downstream 'PublishOutput' job
+              echo "outputJson={}" >> $GITHUB_OUTPUT
+            fi
 
     PublishOutput:
       name: Publishing output of all Steps after basic Review
@@ -97,7 +136,6 @@ jobs:
       needs: [sast, sbom_generator, secret_detection, sca]
       if: always()
       steps:
-            # - run: echo "Pushing Files into Reports Repo"
             -  name: checkout the reports repo
                uses: actions/checkout@v4
                with:
@@ -162,7 +200,7 @@ jobs:
         - name: Conditional Build Step
           run: |
             if [[ "$BREAK_ON_FAILURE_FLAG" == "true" ]]; then
-              echo "BREAK_ON_FAILURE_FLAG is false, continuing only if all reports were successful."
+              echo "BREAK_ON_FAILURE_FLAG is true, continuing only if all reports are successful."
               if [[ "${{ needs.sast.result }}" != "success" ]] || \
                 [[ "${{ needs.sbom_generator.result }}" != "success" ]] || \
                 [[ "${{ needs.secret_detection.result }}" != "success" ]] || \
@@ -171,7 +209,7 @@ jobs:
                 exit 0
               fi
             else
-              echo "BREAK_ON_FAILURE_FLAG is false, running regardless of reports."
+              echo "BREAK_ON_FAILURE_FLAG is false, running build regardless of reports."
             fi
         - run: echo "PR approved, Running Build"
     #         - name: Checkout code
