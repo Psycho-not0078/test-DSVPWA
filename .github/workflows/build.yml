@@ -1,6 +1,11 @@
 name: Build Pipeline
 run-name: Commit - ${{ github.sha }} on ${{ github.ref_name }}
 
+on: 
+    push:
+        branches:
+          - 'main'
+
 env:
   BREAK_ON_FAILURE_FLAG: false # Set to true or false
 
