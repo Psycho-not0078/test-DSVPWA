@@ -28,7 +28,8 @@ jobs:
               output: SAST-results.json
           - name: output
             id: sast
-            run: "outputJson=$(cat SAST-results.json)" >> $GITHUB_OUTPUT
+            run: | 
+              echo "outputJson=$(cat SAST-results.json)" >> $GITHUB_OUTPUT 
 
     sbom_generator:
         name: Running Syft [SBOM generator] on project
@@ -45,7 +46,8 @@ jobs:
                 output-file: sbom.json
             - name: output
               id: sbom
-              run: "outputJson=$(cat sbom.json)" >> $GITHUB_OUTPUT
+              run: | 
+                echo "outputJson=$(cat sbom.json)" >> $GITHUB_OUTPUT 
 
     secret_detection:
         name: Running Truffle-Hog on project
@@ -60,10 +62,11 @@ jobs:
               uses: trufflesecurity/trufflehog@main
               with:
                 path: ./ 
-                extra_args: --json --log-level=-1 >> secrets.json
+                extra_args: --json --log-level=-1 >> secrets-result.json
             - name: output
-              id: secrets
-              run: "outputJson=$(cat secrets.json)" >> $GITHUB_OUTPUT
+              id: sbom
+              run: | 
+                echo "outputJson=$(cat secrets-result.json)" >> $GITHUB_OUTPUT 
 
     sca:
         name: Running Grype [SCA] on project
@@ -80,11 +83,12 @@ jobs:
                 path: "."
                 only-fixed: true
                 severity-cutoff: high
-                output-file: SCA.json
+                output-file: sca-results.json
                 output_format: json
         - name: output
           id: sca
-          run: "outputJson=$(cat SCA.json)" >> $GITHUB_OUTPUT
+          run: | 
+            echo "outputJson=$(cat sca-results.json)" >> $GITHUB_OUTPUT 
 
     PublishOutput:
       name: Publishing output of all Steps after basic Review
