@@ -139,7 +139,7 @@ jobs:
         needs: [PublishOutput, sast, sbom_generator, secret_detection, sca] 
         if: |
           ${{ 
-            env.BREAK_ON_FAILURE_FLAG == 'true' || 
+            ${{ env.BREAK_ON_FAILURE_FLAG }} == 'true' || 
             (
               needs.sast.result == 'success' && 
               needs.sbom_generator.result == 'success' && 
