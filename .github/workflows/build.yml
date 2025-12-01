@@ -7,7 +7,7 @@ on:
           - 'main'
 
 env:
-  BREAK_ON_FAILURE_FLAG: false # Set to true or false
+  BREAK_ON_FAILURE_FLAG: true # Set to true or false
 
 jobs:
     sast:
@@ -174,7 +174,6 @@ jobs:
               echo "BREAK_ON_FAILURE_FLAG is false, running regardless of reports."
             fi
         - run: echo "PR approved, Running Build"
-
     #         - name: Checkout code
     #           uses: actions/checkout@v4
     #         - name: Set up SSH Key
