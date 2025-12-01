@@ -67,7 +67,7 @@ jobs:
               id: truffleHog
               run: |
                 curl -sSfL https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh | sh -s -- -b /usr/local/bin
-                trufflehog filesystem ./ --json --log-level=-1 >> secrets-result.json  
+                trufflehog filesystem ./ --json --log-level=-1 -x ./.git>> secrets-result.json  
             - name: output
               id: sbom
               run: | 
@@ -137,29 +137,26 @@ jobs:
                   echo $SCA_REPORT > $FOLDER/sca-results.json
                   
                   cd reports-repo
+                  echo "$(pwd)"
                   git config user.name "github-actions[bot]"
                   git config user.email "github-actions[bot]@users.noreply.github.com"
-                  if git diff --exit-code --quiet; then
-                    echo "No changes to commit."
-                  else
-                    git add .
-                    
-                    # Determine which files were changed/added (A or M status)
-                    CHANGED_FILES=$(git status --porcelain | grep '^[AM]' | awk '{print $2}' | xargs basename | tr '\n' ', ')
-                    # Remove trailing comma and space
-                    CHANGED_FILES="${CHANGED_FILES%, }"
-                    
-                    # Extract short branch name
-                    BRANCH_NAME=$(echo ${{ github.ref_name }} | sed 's/refs\/heads\///')
-                    
-                    # Create the custom commit message
-                    COMMIT_MESSAGE="Report Update: ${{ github.event.repository.name }}/${BRANCH_NAME} - Files: $CHANGED_FILES"
-                    
-                    git commit -m "$COMMIT_MESSAGE"
-                    git push origin main
-                    echo "Successfully pushed report changes to the reports repository."
-                    echo "Commit Message: $COMMIT_MESSAGE"
-                  fi
+                  git add ./
+                  
+                  # Determine which files were changed/added (A or M status)
+                  CHANGED_FILES=$(git status --porcelain | grep '^[AM]' | awk '{print $2}' | xargs basename | tr '\n' ', ')
+                  # Remove trailing comma and space
+                  CHANGED_FILES="${CHANGED_FILES%, }"
+                  
+                  # Extract short branch name
+                  BRANCH_NAME=$(echo ${{ github.ref_name }} | sed 's/refs\/heads\///')
+                  
+                  # Create the custom commit message
+                  COMMIT_MESSAGE="Report Update: ${{ github.event.repository.name }}/${BRANCH_NAME} - Files: $CHANGED_FILES"
+                  
+                  git commit -m "$COMMIT_MESSAGE"
+                  git push origin main
+                  echo "Successfully pushed report changes to the reports repository."
+                  echo "Commit Message: $COMMIT_MESSAGE"
 
     build:
       name: Running Build
