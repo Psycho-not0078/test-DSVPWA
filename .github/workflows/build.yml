@@ -137,13 +137,11 @@ jobs:
       name: Running Build
       runs-on: ubuntu-latest
       needs: [PublishOutput, sast, sbom_generator, secret_detection, sca]
-      env:
-        FAILURE_FLAG: ${{ env.BREAK_ON_FAILURE_FLAG }}
       steps:
         - name: Conditional Build Step
           run: |
-            if [[ "$FAILURE_FLAG" == "false" ]]; then
-              echo "FAILURE_FLAG is false, continuing only if all reports were successful."
+            if [[ "$BREAK_ON_FAILURE_FLAG" == "false" ]]; then
+              echo "BREAK_ON_FAILURE_FLAG is false, continuing only if all reports were successful."
               if [[ "${{ needs.sast.result }}" != "success" ]] || \
                 [[ "${{ needs.sbom_generator.result }}" != "success" ]] || \
                 [[ "${{ needs.secret_detection.result }}" != "success" ]] || \
@@ -152,7 +150,7 @@ jobs:
                 exit 0
               fi
             else
-              echo "FAILURE_FLAG is true, running regardless of reports."
+              echo "BREAK_ON_FAILURE_FLAG is true, running regardless of reports."
             fi
         - run: echo "PR approved, Running Build"
 
