@@ -6,7 +6,7 @@ on:
 
 jobs:
   security:
-    uses: Psycho-not0078/studious-octo-meme/.github/workflows/pythonSSH-build.yml
+    uses: Psycho-not0078/studious-octo-meme/.github/workflows/pythonSSH-build.yml@main
     with:
       break_on_failure: true
     secrets:
