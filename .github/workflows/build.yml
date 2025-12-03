@@ -11,7 +11,7 @@ jobs:
       # Required for deployment logic, set to false for emergency bypass
       break_on_failure: false 
       language: Python
-      languageVersion: '3.10'
+      languageVersion: '3.14'
       deployment_type: VM 
       # Variable that holds the reports repo link (e.g., 'your-org/security-reports')
       repo_link: ${{ vars.REPORTS_REPO_NAME }} 
