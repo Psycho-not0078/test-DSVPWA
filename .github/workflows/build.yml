@@ -20,3 +20,7 @@ jobs:
       # USER: ${{ secrets.SSH_USER }}
       # HOST: ${{ secrets.SSH_HOST }}
       # SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+  build:
+    name: BuildPipeline
+    uses:
+      
