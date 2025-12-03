@@ -6,7 +6,7 @@ on:
 jobs:
   security_check:
     name: Run Security Pipeline
-    uses: SathyaNarayana-indsys/studious-octo-meme/.github/workflows/Secure-main.yml@main
+    uses: SathyaNarayana-indsys/studious-octo-meme/.github/workflows/Secure-Main.yml@main
     with:
       # Required for deployment logic, set to false for emergency bypass
       break_on_failure: false 
