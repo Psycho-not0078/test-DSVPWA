@@ -1,6 +1,8 @@
+name: Application CI
+on:
+  push:
+    branches: [ main ]
 
-<<<<<<< HEAD
-=======
 jobs:
   security_check:
     name: Run Security Pipeline
@@ -15,5 +17,3 @@ jobs:
       # USER: ${{ secrets.SSH_USER }}
       # HOST: ${{ secrets.SSH_HOST }}
       # SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-
->>>>>>> fd3fb98881bd1dc9fff16030087ae65d4c882298
